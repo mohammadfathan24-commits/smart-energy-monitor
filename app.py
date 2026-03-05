@@ -1,71 +1,86 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import RandomForestRegressor
+import joblib
+import matplotlib.pyplot as plt
 
-# ======================
-# Buat Dataset Dummy
-# ======================
-dates = pd.date_range(start="2025-01-01", end="2025-12-31")
-np.random.seed(42)
+# Load model
+model = joblib.load("model.pkl")
 
-data = {
-    "date": dates,
-    "ac_usage": np.random.normal(60, 10, len(dates)),
-    "computer_usage": np.random.normal(40, 8, len(dates)),
-    "lighting_usage": np.random.normal(25, 5, len(dates))
-}
+# Judul aplikasi
+st.set_page_config(page_title="Smart Energy Monitor", page_icon="💡", layout="wide")
 
-df = pd.DataFrame(data)
-
-df["total_usage"] = df["ac_usage"] + df["computer_usage"] + df["lighting_usage"]
-tarif = 1500
-df["monthly_bill"] = df["total_usage"] * tarif
-df["weekday"] = df["date"].dt.weekday
-df["month"] = df["date"].dt.month
-
-# ======================
-# Training Model
-# ======================
-X = df[["ac_usage","computer_usage","lighting_usage","weekday","month"]]
-y = df["monthly_bill"]
-
-model = RandomForestRegressor()
-model.fit(X, y)
-
-# ======================
-# Streamlit UI
-# ======================
 st.title("💡 Smart Energy Monitor")
-st.subheader("Prediksi Tagihan & Rekomendasi Hemat Energi")
+st.markdown("AI untuk memprediksi **penggunaan listrik dan saran hemat energi** di sekolah atau kantor.")
 
-ac = st.slider("Penggunaan AC (kWh)", 0, 120, 60)
-computer = st.slider("Penggunaan Komputer (kWh)", 0, 100, 40)
-lighting = st.slider("Penggunaan Lampu (kWh)", 0, 60, 25)
-weekday = st.slider("Hari (0=Senin, 6=Minggu)", 0, 6, 2)
+st.divider()
+
+# Layout 2 kolom
+col1, col2 = st.columns(2)
+
+with col1:
+    ac = st.slider("Jumlah penggunaan AC", 0, 100, 50)
+    computer = st.slider("Jumlah penggunaan Komputer", 0, 100, 30)
+
+with col2:
+    lighting = st.slider("Jumlah penggunaan Lampu", 0, 100, 20)
+    weekday = st.selectbox(
+        "Pilih Hari",
+        ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"]
+    )
+
 month = st.slider("Bulan", 1, 12, 6)
 
-data_input = pd.DataFrame({
-    "ac_usage": [ac],
-    "computer_usage": [computer],
-    "lighting_usage": [lighting],
-    "weekday": [weekday],
-    "month": [month]
-})
+# Konversi hari ke angka
+weekday_map = {
+    "Senin":0,
+    "Selasa":1,
+    "Rabu":2,
+    "Kamis":3,
+    "Jumat":4,
+    "Sabtu":5,
+    "Minggu":6
+}
 
-prediksi = model.predict(data_input)
+weekday_num = weekday_map[weekday]
 
-st.subheader("💰 Estimasi Tagihan:")
-st.write("Rp", int(prediksi[0]))
+st.divider()
 
-st.subheader("📊 Rekomendasi Hemat Energi")
+# Tombol prediksi
+if st.button("🔍 Prediksi Penggunaan Listrik"):
 
-if ac > 70:
-    st.warning("⚠ Kurangi penggunaan AC atau naikkan suhu ke 26°C")
-if computer > 50:
-    st.warning("⚠ Matikan komputer yang tidak digunakan")
-if lighting > 35:
-    st.warning("⚠ Gunakan cahaya alami di siang hari")
+    data = np.array([[ac, computer, lighting, weekday_num, month]])
+    prediksi = model.predict(data)
 
-if ac <= 70 and computer <= 50 and lighting <= 35:
-    st.success("✅ Penggunaan sudah efisien")
+    st.subheader("⚡ Hasil Prediksi")
+    st.success(f"Estimasi penggunaan listrik: **{prediksi[0]:.2f} kWh**")
+
+    # Grafik penggunaan
+    st.subheader("📊 Grafik Penggunaan Perangkat")
+
+    perangkat = ["AC","Computer","Lighting"]
+    nilai = [ac, computer, lighting]
+
+    fig, ax = plt.subplots()
+    ax.bar(perangkat, nilai)
+    ax.set_ylabel("Penggunaan")
+    ax.set_title("Distribusi Penggunaan Energi")
+
+    st.pyplot(fig)
+
+    st.divider()
+
+    # Saran hemat energi
+    st.subheader("💡 Saran Hemat Energi")
+
+    if ac > 70:
+        st.warning("Matikan beberapa AC jika tidak digunakan.")
+
+    if computer > 60:
+        st.warning("Kurangi komputer yang tidak dipakai.")
+
+    if lighting > 50:
+        st.warning("Matikan lampu di ruangan kosong.")
+
+    if ac < 70 and computer < 60 and lighting < 50:
+        st.success("Penggunaan energi sudah cukup efisien 👍")
