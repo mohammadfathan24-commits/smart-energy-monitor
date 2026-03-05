@@ -1,78 +1,104 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+import plotly.express as px
 
-# Konfigurasi halaman
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+
 st.set_page_config(
-    page_title="Smart Energy Monitor",
+    page_title="Smart Energy Monitor AI",
     page_icon="⚡",
     layout="wide"
 )
 
-# Judul
-st.title("⚡ Smart Energy Monitor")
-st.write("AI Dashboard untuk memonitor dan memprediksi penggunaan listrik")
+st.title("⚡ Smart Energy Monitor AI Dashboard")
+st.write("AI untuk analisis dan prediksi penggunaan energi")
 
 st.divider()
 
-# Layout input
-col1, col2 = st.columns(2)
+# Upload dataset
+st.sidebar.header("Upload Dataset")
+file = st.sidebar.file_uploader("Upload CSV", type=["csv"])
 
-with col1:
-    ac = st.slider("Penggunaan AC", 0, 100, 50)
-    computer = st.slider("Penggunaan Komputer", 0, 100, 30)
+if file is not None:
 
-with col2:
-    lighting = st.slider("Penggunaan Lampu", 0, 100, 20)
-    weekday = st.selectbox(
-        "Hari",
-        ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"]
-    )
+    df = pd.read_csv(file)
 
-# Hitung energi
-total = ac + computer + lighting
-tarif = 1500
-prediksi_biaya = total * tarif
+    st.subheader("📂 Dataset Preview")
+    st.dataframe(df)
+
+    st.divider()
+
+    # Statistik
+    st.subheader("📊 Statistik Data")
+
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric("Jumlah Data", len(df))
+    col2.metric("Jumlah Kolom", len(df.columns))
+    col3.metric("Missing Data", df.isna().sum().sum())
+
+    st.divider()
+
+    # Grafik penggunaan energi
+    st.subheader("⚡ Visualisasi Energi")
+
+    column = st.selectbox("Pilih kolom untuk grafik", df.columns)
+
+    fig = px.line(df, y=column, title="Grafik Energi")
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.divider()
+
+    # Machine Learning
+    st.subheader("🤖 AI Prediksi Energi")
+
+    if len(df.columns) >= 2:
+
+        X = df.iloc[:, :-1]
+        y = df.iloc[:, -1]
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42
+        )
+
+        model = RandomForestRegressor()
+
+        model.fit(X_train, y_train)
+
+        pred = model.predict(X_test)
+
+        pred_df = pd.DataFrame({
+            "Data Asli": y_test.values,
+            "Prediksi AI": pred
+        })
+
+        fig2 = px.line(pred_df, title="Prediksi AI vs Data Asli")
+
+        st.plotly_chart(fig2, use_container_width=True)
+
+        st.success("Model AI berhasil dilatih!")
+
+        st.divider()
+
+        # Rekomendasi hemat energi
+        st.subheader("💡 Rekomendasi Hemat Energi")
+
+        avg = y.mean()
+
+        if avg > 500:
+            st.warning("Penggunaan energi tinggi. Matikan perangkat tidak terpakai.")
+        elif avg > 300:
+            st.info("Penggunaan energi sedang. Optimalkan penggunaan AC dan lampu.")
+        else:
+            st.success("Penggunaan energi sudah efisien!")
+
+else:
+
+    st.info("Silakan upload dataset CSV untuk memulai analisis.")
 
 st.divider()
 
-# Dashboard metrics
-col1, col2, col3 = st.columns(3)
-
-col1.metric("Total Energi", total)
-col2.metric("Tarif Listrik", "Rp1500")
-col3.metric("Prediksi Tagihan", f"Rp {prediksi_biaya:,}")
-
-st.divider()
-
-# Data grafik
-data = pd.DataFrame({
-    "Perangkat": ["AC", "Komputer", "Lampu"],
-    "Penggunaan": [ac, computer, lighting]
-})
-
-# Grafik
-fig, ax = plt.subplots()
-ax.bar(data["Perangkat"], data["Penggunaan"])
-ax.set_ylabel("Penggunaan Energi")
-
-st.subheader("📊 Grafik Penggunaan Energi")
-st.pyplot(fig)
-
-st.divider()
-
-# AI Recommendation
-st.subheader("🤖 Rekomendasi AI Hemat Energi")
-
-if ac > 70:
-    st.warning("Kurangi penggunaan AC untuk menghemat listrik.")
-
-if computer > 60:
-    st.warning("Matikan komputer yang tidak digunakan.")
-
-if lighting > 50:
-    st.warning("Gunakan pencahayaan alami pada siang hari.")
-
-if total < 100:
-    st.success("Penggunaan energi sudah efisien!")
+st.caption("Smart Energy Monitor AI | Project AI untuk efisiensi energi")
