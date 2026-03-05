@@ -1,11 +1,9 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import joblib
 import matplotlib.pyplot as plt
 
 # Load model
-model = joblib.load("model.pkl")
 
 # Judul aplikasi
 st.set_page_config(page_title="Smart Energy Monitor", page_icon="💡", layout="wide")
@@ -84,3 +82,4 @@ if st.button("🔍 Prediksi Penggunaan Listrik"):
 
     if ac < 70 and computer < 60 and lighting < 50:
         st.success("Penggunaan energi sudah cukup efisien 👍")
+
