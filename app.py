@@ -3,83 +3,54 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Load model
+st.set_page_config(page_title="Smart Energy Monitor", page_icon="⚡")
 
-# Judul aplikasi
-st.set_page_config(page_title="Smart Energy Monitor", page_icon="💡", layout="wide")
-
-st.title("💡 Smart Energy Monitor")
-st.markdown("AI untuk memprediksi **penggunaan listrik dan saran hemat energi** di sekolah atau kantor.")
+st.title("⚡ Smart Energy Monitor")
+st.write("AI sederhana untuk memprediksi penggunaan listrik.")
 
 st.divider()
 
-# Layout 2 kolom
-col1, col2 = st.columns(2)
+# Input penggunaan perangkat
+ac = st.slider("Penggunaan AC", 0, 100, 50)
+computer = st.slider("Penggunaan Komputer", 0, 100, 30)
+lighting = st.slider("Penggunaan Lampu", 0, 100, 20)
 
-with col1:
-    ac = st.slider("Jumlah penggunaan AC", 0, 100, 50)
-    computer = st.slider("Jumlah penggunaan Komputer", 0, 100, 30)
+# Hitung total penggunaan
+total = ac + computer + lighting
 
-with col2:
-    lighting = st.slider("Jumlah penggunaan Lampu", 0, 100, 20)
-    weekday = st.selectbox(
-        "Pilih Hari",
-        ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"]
-    )
+# Prediksi biaya
+tarif = 1500
+prediksi_biaya = total * tarif
 
-month = st.slider("Bulan", 1, 12, 6)
+st.subheader("🔋 Total Penggunaan Energi")
+st.write(total)
 
-# Konversi hari ke angka
-weekday_map = {
-    "Senin":0,
-    "Selasa":1,
-    "Rabu":2,
-    "Kamis":3,
-    "Jumat":4,
-    "Sabtu":5,
-    "Minggu":6
-}
+st.subheader("💰 Prediksi Tagihan Listrik")
+st.write(f"Rp {prediksi_biaya:,}")
 
-weekday_num = weekday_map[weekday]
+# Grafik penggunaan
+data = pd.DataFrame({
+    "Perangkat": ["AC", "Komputer", "Lampu"],
+    "Penggunaan": [ac, computer, lighting]
+})
 
-st.divider()
+fig, ax = plt.subplots()
+ax.bar(data["Perangkat"], data["Penggunaan"])
+ax.set_ylabel("Penggunaan Energi")
 
-# Tombol prediksi
-if st.button("🔍 Prediksi Penggunaan Listrik"):
+st.pyplot(fig)
 
-    data = np.array([[ac, computer, lighting, weekday_num, month]])
-    prediksi = model.predict(data)
+# Rekomendasi AI sederhana
+st.subheader("🤖 Rekomendasi Hemat Energi")
 
-    st.subheader("⚡ Hasil Prediksi")
-    st.success(f"Estimasi penggunaan listrik: **{prediksi[0]:.2f} kWh**")
+if ac > 70:
+    st.warning("Matikan AC jika ruangan kosong.")
+    
+if computer > 60:
+    st.warning("Matikan komputer yang tidak digunakan.")
+    
+if lighting > 50:
+    st.warning("Kurangi penggunaan lampu di siang hari.")
 
-    # Grafik penggunaan
-    st.subheader("📊 Grafik Penggunaan Perangkat")
-
-    perangkat = ["AC","Computer","Lighting"]
-    nilai = [ac, computer, lighting]
-
-    fig, ax = plt.subplots()
-    ax.bar(perangkat, nilai)
-    ax.set_ylabel("Penggunaan")
-    ax.set_title("Distribusi Penggunaan Energi")
-
-    st.pyplot(fig)
-
-    st.divider()
-
-    # Saran hemat energi
-    st.subheader("💡 Saran Hemat Energi")
-
-    if ac > 70:
-        st.warning("Matikan beberapa AC jika tidak digunakan.")
-
-    if computer > 60:
-        st.warning("Kurangi komputer yang tidak dipakai.")
-
-    if lighting > 50:
-        st.warning("Matikan lampu di ruangan kosong.")
-
-    if ac < 70 and computer < 60 and lighting < 50:
-        st.success("Penggunaan energi sudah cukup efisien 👍")
-
+if total < 100:
+    st.success("Penggunaan energi sudah cukup efisien!")
