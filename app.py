@@ -158,3 +158,61 @@ st.download_button(
 )
 
 st.caption("Smart Energy Monitor AI • Project AI untuk efisiensi energi")
+
+st.divider()
+
+st.subheader("⚡ Smart Energy Dashboard")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    ac_use = st.slider("Penggunaan AC (kWh)",0,100,50)
+    computer_use = st.slider("Penggunaan Komputer (kWh)",0,100,40)
+
+with col2:
+    lighting_use = st.slider("Penggunaan Lampu (kWh)",0,100,60)
+
+    day = st.selectbox(
+        "Hari",
+        ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"]
+    )
+
+    month = st.selectbox(
+        "Bulan",
+        ["Jan","Feb","Mar","Apr","Mei","Jun",
+         "Jul","Agu","Sep","Okt","Nov","Des"]
+    )
+
+st.divider()
+
+# HITUNG TOTAL ENERGI
+total_energy = ac_use + computer_use + lighting_use
+
+# TARIF
+tarif = 1500
+
+# HITUNG TAGIHAN
+bill = total_energy * tarif
+
+col1, col2, col3 = st.columns(3)
+
+col1.metric("Total Energi (kWh)", total_energy)
+col2.metric("Tarif Listrik", f"Rp {tarif}")
+col3.metric("Prediksi Tagihan", f"Rp {bill:,.0f}")
+
+st.divider()
+
+# AI REKOMENDASI
+st.subheader("🤖 AI Rekomendasi Penghematan")
+
+if ac_use > 70:
+    st.warning("AC terlalu tinggi ⚠️ Pertimbangkan menaikkan suhu AC atau mematikannya saat tidak digunakan.")
+
+if lighting_use > 70:
+    st.info("Lampu cukup tinggi 💡 Gunakan lampu LED atau matikan lampu yang tidak diperlukan.")
+
+if computer_use > 70:
+    st.info("Komputer aktif lama 💻 Matikan komputer jika tidak digunakan.")
+
+if total_energy < 150:
+    st.success("Penggunaan energi cukup efisien 👍")
