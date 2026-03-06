@@ -64,40 +64,86 @@ elif mode == "Upload Dataset":
     if file is not None:
         df = pd.read_csv(file)
     else:
-        st.info("Upload dataset atau gunakan Generate Dataset.")
+        st.info("Upload dataset terlebih dahulu.")
         st.stop()
 
 # ==============================
-# MANUAL INPUT
+# MANUAL INPUT DASHBOARD
 # ==============================
 
 elif mode == "Manual Input":
 
-    st.subheader("✍️ Manual Input Data Energi")
+    st.subheader("⚡ Smart Energy Dashboard")
 
-    ac = st.number_input("Penggunaan AC", 0, 20, 3)
-    computer = st.number_input("Penggunaan Komputer", 0, 50, 10)
-    lighting = st.number_input("Penggunaan Lampu", 0, 100, 20)
+    col1, col2 = st.columns(2)
 
-    weekday = st.slider("Hari (0=Senin, 6=Minggu)", 0, 6, 2)
-    month = st.slider("Bulan", 1, 12, 6)
+    with col1:
+        ac_use = st.slider("Penggunaan AC (kWh)",0,100,50)
+        computer_use = st.slider("Penggunaan Komputer (kWh)",0,100,40)
+
+    with col2:
+        lighting_use = st.slider("Penggunaan Lampu (kWh)",0,100,60)
+
+        day = st.selectbox(
+            "Hari",
+            ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"]
+        )
+
+        month = st.selectbox(
+            "Bulan",
+            ["Jan","Feb","Mar","Apr","Mei","Jun",
+             "Jul","Agu","Sep","Okt","Nov","Des"]
+        )
+
+    weekday_map = {
+        "Senin":0,"Selasa":1,"Rabu":2,"Kamis":3,
+        "Jumat":4,"Sabtu":5,"Minggu":6
+    }
+
+    month_map = {
+        "Jan":1,"Feb":2,"Mar":3,"Apr":4,"Mei":5,"Jun":6,
+        "Jul":7,"Agu":8,"Sep":9,"Okt":10,"Nov":11,"Des":12
+    }
 
     df = pd.DataFrame({
-        "ac":[ac],
-        "computer":[computer],
-        "lighting":[lighting],
-        "weekday":[weekday],
-        "month":[month]
+        "ac":[ac_use],
+        "computer":[computer_use],
+        "lighting":[lighting_use],
+        "weekday":[weekday_map[day]],
+        "month":[month_map[month]]
     })
 
-    df["energy_usage"] = (
-        df["ac"]*30 +
-        df["computer"]*10 +
-        df["lighting"]*5 +
-        np.random.randint(20,80)
-    )
+    df["energy_usage"] = ac_use + computer_use + lighting_use
 
-    st.success("Data manual berhasil dimasukkan!")
+    st.divider()
+
+    total_energy = df["energy_usage"].iloc[0]
+
+    tarif = 1500
+
+    bill = total_energy * tarif
+
+    col1,col2,col3 = st.columns(3)
+
+    col1.metric("Total Energi (kWh)",total_energy)
+    col2.metric("Tarif Listrik",f"Rp {tarif}")
+    col3.metric("Prediksi Tagihan",f"Rp {bill:,.0f}")
+
+    st.divider()
+
+    st.subheader("🤖 AI Rekomendasi Penghematan")
+
+    if ac_use > 70:
+        st.warning("AC terlalu tinggi ⚠️ Pertimbangkan menaikkan suhu atau mematikannya.")
+
+    if lighting_use > 70:
+        st.info("Lampu cukup tinggi 💡 Gunakan lampu LED atau matikan yang tidak diperlukan.")
+
+    if computer_use > 70:
+        st.info("Komputer aktif lama 💻 Matikan jika tidak digunakan.")
+
+    if total_energy < 150:
+        st.success("Penggunaan energi cukup efisien 👍")
 
 # ==============================
 # DATA PREVIEW
@@ -143,62 +189,32 @@ st.subheader("🤖 AI Prediksi Energi")
 X = df[["ac","computer","lighting","weekday","month"]]
 y = df["energy_usage"]
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X,y,test_size=0.2,random_state=42
-)
+if len(df) < 5:
 
-model = RandomForestRegressor()
+    st.warning("Data terlalu sedikit untuk melatih AI. Gunakan Generate Dataset minimal 10 data.")
 
-model.fit(X_train,y_train)
+else:
 
-pred = model.predict(X_test)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,y,test_size=0.2,random_state=42
+    )
 
-pred_df = pd.DataFrame({
-    "Data Asli":y_test.values,
-    "Prediksi AI":pred
-})
+    model = RandomForestRegressor()
 
-fig2 = px.line(pred_df,title="Prediksi AI vs Data Asli")
+    model.fit(X_train,y_train)
 
-st.plotly_chart(fig2,use_container_width=True)
+    pred = model.predict(X_test)
 
-st.success("Model AI berhasil dilatih!")
+    pred_df = pd.DataFrame({
+        "Data Asli":y_test.values,
+        "Prediksi AI":pred
+    })
 
-st.divider()
+    fig2 = px.line(pred_df,title="Prediksi AI vs Data Asli")
 
-# ==============================
-# ELECTRICITY COST
-# ==============================
+    st.plotly_chart(fig2,use_container_width=True)
 
-st.subheader("💰 Prediksi Tagihan Listrik")
-
-tarif = st.number_input(
-    "Tarif listrik per kWh (Rp)",
-    value=1500
-)
-
-avg_energy = y.mean()
-
-cost = avg_energy * tarif
-
-st.metric("Estimasi Tagihan",f"Rp {cost:,.0f}")
-
-st.divider()
-
-# ==============================
-# AI RECOMMENDATION
-# ==============================
-
-st.subheader("💡 AI Rekomendasi Hemat Energi")
-
-if df["ac"].mean() > 6:
-    st.warning("Gunakan AC seperlunya atau naikkan suhu AC.")
-
-if df["computer"].mean() > 25:
-    st.info("Matikan komputer yang tidak digunakan.")
-
-if df["lighting"].mean() > 40:
-    st.info("Gunakan lampu LED hemat energi.")
+    st.success("Model AI berhasil dilatih!")
 
 st.divider()
 
