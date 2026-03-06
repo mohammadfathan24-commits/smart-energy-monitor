@@ -23,7 +23,7 @@ st.sidebar.title("⚙️ Kontrol")
 
 mode = st.sidebar.selectbox(
     "Pilih Mode",
-    ["Upload Dataset", "Generate Dataset", "Manual Input"]
+    ["Upload Dataset", "Generate Dataset"]
 )
 
 # GENERATE DATASET
@@ -159,41 +159,6 @@ st.download_button(
 
 st.caption("Smart Energy Monitor AI • Project AI untuk efisiensi energi")
 
-elif mode == "Manual Input":
 
-    st.subheader("🧾 Input Penggunaan Energi")
 
-    ac = st.slider("AC (kWh)",0,100,40)
-    computer = st.slider("Komputer (kWh)",0,100,30)
-    lighting = st.slider("Lampu (kWh)",0,100,20)
-
-    total = ac + computer + lighting
-
-    tarif = 1500
-    bill = total * tarif
-
-    st.divider()
-
-    col1, col2 = st.columns(2)
-
-    col1.metric("Total Energi", total)
-    col2.metric("Estimasi Tagihan", f"Rp {bill:,.0f}")
-
-    st.divider()
-
-    st.subheader("🤖 AI Rekomendasi")
-
-    if ac > 70:
-        st.warning("Penggunaan AC tinggi. Coba naikkan suhu AC.")
-
-    if lighting > 70:
-        st.info("Lampu cukup tinggi. Gunakan lampu LED.")
-
-    if computer > 70:
-        st.info("Matikan komputer jika tidak digunakan.")
-
-    if total < 120:
-        st.success("Penggunaan energi cukup efisien 👍")
-if total_energy < 150:
-    st.success("Penggunaan energi cukup efisien 👍")
 
