@@ -23,7 +23,7 @@ st.sidebar.title("⚙️ Kontrol")
 
 mode = st.sidebar.selectbox(
     "Pilih Mode",
-    ["Upload Dataset", "Generate Dataset"]
+    ["Upload Dataset", "Generate Dataset", "Manual Input"]
 )
 
 # GENERATE DATASET
@@ -159,60 +159,41 @@ st.download_button(
 
 st.caption("Smart Energy Monitor AI • Project AI untuk efisiensi energi")
 
-st.divider()
+elif mode == "Manual Input":
 
-st.subheader("⚡ Smart Energy Dashboard")
+    st.subheader("🧾 Input Penggunaan Energi")
 
-col1, col2 = st.columns(2)
+    ac = st.slider("AC (kWh)",0,100,40)
+    computer = st.slider("Komputer (kWh)",0,100,30)
+    lighting = st.slider("Lampu (kWh)",0,100,20)
 
-with col1:
-    ac_use = st.slider("Penggunaan AC (kWh)",0,100,50)
-    computer_use = st.slider("Penggunaan Komputer (kWh)",0,100,40)
+    total = ac + computer + lighting
 
-with col2:
-    lighting_use = st.slider("Penggunaan Lampu (kWh)",0,100,60)
+    tarif = 1500
+    bill = total * tarif
 
-    day = st.selectbox(
-        "Hari",
-        ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"]
-    )
+    st.divider()
 
-    month = st.selectbox(
-        "Bulan",
-        ["Jan","Feb","Mar","Apr","Mei","Jun",
-         "Jul","Agu","Sep","Okt","Nov","Des"]
-    )
+    col1, col2 = st.columns(2)
 
-st.divider()
+    col1.metric("Total Energi", total)
+    col2.metric("Estimasi Tagihan", f"Rp {bill:,.0f}")
 
-# HITUNG TOTAL ENERGI
-total_energy = ac_use + computer_use + lighting_use
+    st.divider()
 
-# TARIF
-tarif = 1500
+    st.subheader("🤖 AI Rekomendasi")
 
-# HITUNG TAGIHAN
-bill = total_energy * tarif
+    if ac > 70:
+        st.warning("Penggunaan AC tinggi. Coba naikkan suhu AC.")
 
-col1, col2, col3 = st.columns(3)
+    if lighting > 70:
+        st.info("Lampu cukup tinggi. Gunakan lampu LED.")
 
-col1.metric("Total Energi (kWh)", total_energy)
-col2.metric("Tarif Listrik", f"Rp {tarif}")
-col3.metric("Prediksi Tagihan", f"Rp {bill:,.0f}")
+    if computer > 70:
+        st.info("Matikan komputer jika tidak digunakan.")
 
-st.divider()
-
-# AI REKOMENDASI
-st.subheader("🤖 AI Rekomendasi Penghematan")
-
-if ac_use > 70:
-    st.warning("AC terlalu tinggi ⚠️ Pertimbangkan menaikkan suhu AC atau mematikannya saat tidak digunakan.")
-
-if lighting_use > 70:
-    st.info("Lampu cukup tinggi 💡 Gunakan lampu LED atau matikan lampu yang tidak diperlukan.")
-
-if computer_use > 70:
-    st.info("Komputer aktif lama 💻 Matikan komputer jika tidak digunakan.")
-
+    if total < 120:
+        st.success("Penggunaan energi cukup efisien 👍")
 if total_energy < 150:
     st.success("Penggunaan energi cukup efisien 👍")
+
