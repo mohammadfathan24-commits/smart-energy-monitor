@@ -1,32 +1,22 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px
+from sklearn.linear_model import LinearRegression
 
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-
-st.set_page_config(
-    page_title="Smart Energy Monitor AI",
-    page_icon="⚡",
-    layout="wide"
-)
-
-# HEADER
 st.title("⚡ Smart Energy Monitor AI")
-st.write("AI Dashboard untuk memonitor dan memprediksi penggunaan energi.")
 
-st.divider()
+st.write("Aplikasi AI sederhana untuk memonitor penggunaan energi dan memprediksi tagihan listrik.")
 
-# SIDEBAR
-st.sidebar.title("⚙️ Kontrol")
-
+# SIDEBAR MODE
 mode = st.sidebar.selectbox(
     "Pilih Mode",
-    ["Upload Dataset", "Generate Dataset"]
+    ["Generate Dataset", "Upload Dataset", "Manual Input"]
 )
 
-# GENERATE DATASET
+# ==============================
+# MODE 1 : GENERATE DATASET
+# ==============================
+
 if mode == "Generate Dataset":
 
     st.subheader("⚡ Generate Dataset Energi")
@@ -34,131 +24,117 @@ if mode == "Generate Dataset":
     rows = st.slider("Jumlah data", 10, 200, 50)
 
     data = {
-        "ac": np.random.randint(1,10,rows),
-        "computer": np.random.randint(5,40,rows),
-        "lighting": np.random.randint(10,60,rows),
+        "ac": np.random.randint(10,80,rows),
+        "computer": np.random.randint(5,60,rows),
+        "lighting": np.random.randint(10,70,rows),
         "weekday": np.random.randint(0,7,rows),
-        "month": np.random.randint(1,13,rows),
+        "month": np.random.randint(1,13,rows)
     }
 
     df = pd.DataFrame(data)
 
-    df["energy_usage"] = (
-        df["ac"]*30 +
-        df["computer"]*10 +
-        df["lighting"]*5 +
-        np.random.randint(20,80,rows)
-    )
+    df["total_energy"] = df["ac"] + df["computer"] + df["lighting"]
+    df["bill"] = df["total_energy"] * 1500
 
-else:
+    st.write("Dataset Energi:")
+    st.dataframe(df)
 
-    file = st.sidebar.file_uploader("Upload dataset CSV", type=["csv"])
+    # TRAIN MODEL
+    X = df[["ac","computer","lighting"]]
+    y = df["bill"]
 
-    if file is not None:
-        df = pd.read_csv(file)
-    else:
-        st.info("Upload dataset atau gunakan Generate Dataset.")
-        st.stop()
+    model = LinearRegression()
+    model.fit(X,y)
 
-# DATA PREVIEW
-st.subheader("📂 Dataset Preview")
-st.dataframe(df)
+    st.success("Model AI berhasil dilatih dari dataset yang digenerate.")
 
-# STATISTICS
-st.subheader("📊 Statistik Energi")
+# ==============================
+# MODE 2 : UPLOAD DATASET
+# ==============================
 
-col1, col2, col3 = st.columns(3)
+elif mode == "Upload Dataset":
 
-col1.metric("Jumlah Data", len(df))
-col2.metric("Jumlah Kolom", len(df.columns))
-col3.metric("Rata Energi", round(df["energy_usage"].mean(),2))
+    st.subheader("📂 Upload Dataset")
 
-st.divider()
+    uploaded_file = st.file_uploader("Upload file CSV")
 
-# VISUALIZATION
-st.subheader("📈 Grafik Energi")
+    if uploaded_file is not None:
 
-column = st.selectbox("Pilih Kolom", df.columns)
+        df = pd.read_csv(uploaded_file)
 
-fig = px.line(df, y=column)
+        st.write("Preview Dataset:")
+        st.dataframe(df.head())
 
-st.plotly_chart(fig, use_container_width=True)
+        if {"ac","computer","lighting","bill"}.issubset(df.columns):
 
-st.divider()
+            X = df[["ac","computer","lighting"]]
+            y = df["bill"]
 
-# MACHINE LEARNING
-st.subheader("🤖 AI Prediksi Energi")
+            model = LinearRegression()
+            model.fit(X,y)
 
-X = df[["ac","computer","lighting","weekday","month"]]
-y = df["energy_usage"]
+            st.success("Model AI berhasil dilatih dari dataset yang diupload.")
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X,y,test_size=0.2,random_state=42
-)
+        else:
 
-model = RandomForestRegressor()
+            st.error("Dataset harus memiliki kolom: ac, computer, lighting, bill")
 
-model.fit(X_train,y_train)
+# ==============================
+# MODE 3 : MANUAL INPUT
+# ==============================
 
-pred = model.predict(X_test)
+elif mode == "Manual Input":
 
-pred_df = pd.DataFrame({
-    "Data Asli":y_test.values,
-    "Prediksi AI":pred
-})
+    st.subheader("⚡ Smart Energy Dashboard")
 
-fig2 = px.line(pred_df,title="Prediksi AI vs Data Asli")
+    col1, col2 = st.columns(2)
 
-st.plotly_chart(fig2,use_container_width=True)
+    with col1:
+        ac_use = st.slider("Penggunaan AC (kWh)",0,100,50)
+        computer_use = st.slider("Penggunaan Komputer (kWh)",0,100,40)
 
-st.success("Model AI berhasil dilatih!")
+    with col2:
+        lighting_use = st.slider("Penggunaan Lampu (kWh)",0,100,60)
 
-st.divider()
+        day = st.selectbox(
+            "Hari",
+            ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"]
+        )
 
-# ELECTRICITY COST
-st.subheader("💰 Prediksi Tagihan Listrik")
+        month = st.selectbox(
+            "Bulan",
+            ["Jan","Feb","Mar","Apr","Mei","Jun",
+             "Jul","Agu","Sep","Okt","Nov","Des"]
+        )
 
-tarif = st.number_input(
-    "Tarif listrik per kWh (Rp)",
-    value=1500
-)
+    st.divider()
 
-avg_energy = y.mean()
+    # HITUNG TOTAL ENERGI
+    total_energy = ac_use + computer_use + lighting_use
 
-cost = avg_energy * tarif
+    tarif = 1500
 
-st.metric("Estimasi Tagihan",f"Rp {cost:,.0f}")
+    bill = total_energy * tarif
 
-st.divider()
+    col1, col2, col3 = st.columns(3)
 
-# AI RECOMMENDATION
-st.subheader("💡 AI Rekomendasi Hemat Energi")
+    col1.metric("Total Energi (kWh)", total_energy)
+    col2.metric("Tarif Listrik", f"Rp {tarif}")
+    col3.metric("Prediksi Tagihan", f"Rp {bill:,.0f}")
 
-if df["ac"].mean() > 6:
-    st.warning("Gunakan AC seperlunya atau naikkan suhu AC.")
+    st.divider()
 
-if df["computer"].mean() > 25:
-    st.info("Matikan komputer yang tidak digunakan.")
+    # AI REKOMENDASI
+    st.subheader("🤖 AI Rekomendasi Penghematan")
 
-if df["lighting"].mean() > 40:
-    st.info("Gunakan lampu LED hemat energi.")
+    if ac_use > 70:
+        st.warning("AC terlalu tinggi ⚠️ Pertimbangkan menaikkan suhu AC atau mematikannya saat tidak digunakan.")
 
-st.divider()
+    if lighting_use > 70:
+        st.info("Lampu cukup tinggi 💡 Gunakan lampu LED atau matikan lampu yang tidak diperlukan.")
 
-# DOWNLOAD
-st.subheader("📥 Download Dataset")
+    if computer_use > 70:
+        st.info("Komputer aktif lama 💻 Matikan komputer jika tidak digunakan.")
 
-csv = df.to_csv(index=False).encode("utf-8")
-
-st.download_button(
-    "Download CSV",
-    csv,
-    "energy_data.csv",
-    "text/csv"
-)
-
-st.caption("Smart Energy Monitor AI • Project AI untuk efisiensi energi")
-
-
-
-
+    if total_energy < 150:
+        st.success("Penggunaan energi cukup efisien 👍")
