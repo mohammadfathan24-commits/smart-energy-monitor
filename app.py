@@ -14,7 +14,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("⚡ Smart Energy Monitor AI – Simpel Edition")
+st.title("⚡ Smart Energy Monitor AI – SMK-ALSTAR")
 st.caption("Dashboard AI untuk memonitor & mengoptimalkan energi listrik.")
 
 st.divider()
@@ -141,3 +141,4 @@ st.subheader("📥 Download Dataset")
 csv = df.to_csv(index=False).encode("utf-8")
 st.download_button("Download CSV", csv,"energy_data.csv","text/csv")
 st.caption("Smart Energy Monitor AI • Versi Simpel Tanpa Heatmap")
+
