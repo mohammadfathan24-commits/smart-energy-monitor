@@ -151,4 +151,5 @@ elif highest=="Lighting":
 st.subheader("📥 Download Dataset")
 csv = df.to_csv(index=False).encode("utf-8")
 st.download_button("Download CSV", csv,"energy_data.csv","text/csv")
-st.caption("Smart Energy Monitor AI • Versi Simpel Tanpa Heatmap")
+st.caption("Smart Energy Monitor AI - Smk Alstar")
+
