@@ -14,7 +14,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("⚡ Smart Energy Monitor AI – SMK-ALSTAR")
+st.title("⚡ Smart Energy Monitor AI – Smk Alstar")
 st.caption("Dashboard AI untuk memonitor & mengoptimalkan energi listrik.")
 
 st.divider()
@@ -43,6 +43,10 @@ if mode == "Generate Dataset":
     df = pd.DataFrame(data)
     df["energy_usage"] = df["ac"]*30 + df["computer"]*10 + df["lighting"]*5 + np.random.randint(20,80,rows)
 
+    # ✅ Preview dataset
+    st.subheader("📂 Dataset Preview")
+    st.dataframe(df)
+
 # =====================
 # UPLOAD DATASET
 # =====================
@@ -50,6 +54,9 @@ elif mode == "Upload Dataset":
     file = st.sidebar.file_uploader("Upload CSV", type=["csv"])
     if file:
         df = pd.read_csv(file)
+        # ✅ Preview dataset
+        st.subheader("📂 Dataset Preview")
+        st.dataframe(df)
     else:
         st.info("Upload dataset dulu.")
         st.stop()
@@ -77,6 +84,10 @@ elif mode == "Manual Input":
         "month":[month_map[month]],
         "energy_usage":[ac_use+computer_use+lighting_use]
     })
+
+    # ✅ Preview dataset
+    st.subheader("📂 Dataset Preview")
+    st.dataframe(df)
 
 # =====================
 # DASHBOARD METRIK
@@ -141,4 +152,3 @@ st.subheader("📥 Download Dataset")
 csv = df.to_csv(index=False).encode("utf-8")
 st.download_button("Download CSV", csv,"energy_data.csv","text/csv")
 st.caption("Smart Energy Monitor AI • Versi Simpel Tanpa Heatmap")
-
