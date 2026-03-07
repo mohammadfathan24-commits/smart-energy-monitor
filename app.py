@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 st.title("⚡ Smart Energy Monitor AI – Simpel Edition")
-st.caption("Dashboard AI untuk memonitor & mengoptimalkan penggunaan energi listrik.")
+st.caption("Dashboard AI untuk memonitor & mengoptimalkan energi listrik.")
 
 st.divider()
 
@@ -90,24 +90,12 @@ col3.metric("Prediksi Tagihan", f"Rp {round(df['energy_usage'].mean()*1500,0):,.
 st.divider()
 
 # =====================
-# VISUALISASI
+# LINE CHART
 # =====================
 st.subheader("📈 Visualisasi Energi")
-col_visual, col_heat = st.columns(2)
-
-# Line Chart
-with col_visual:
-    column = st.selectbox("Pilih Kolom untuk Chart", df.columns)
-    fig = px.line(df, y=column)
-    st.plotly_chart(fig,use_container_width=True)
-
-# Heatmap
-with col_heat:
-    heatmap_data = df.groupby(["weekday","month"])["energy_usage"].mean().reset_index()
-    fig2 = px.density_heatmap(
-        heatmap_data, x="month", y="weekday", z="energy_usage", color_continuous_scale="reds"
-    )
-    st.plotly_chart(fig2,use_container_width=True)
+column = st.selectbox("Pilih Kolom untuk Chart", df.columns)
+fig = px.line(df, y=column)
+st.plotly_chart(fig,use_container_width=True)
 
 st.divider()
 
@@ -125,9 +113,11 @@ else:
     model.fit(X_train, y_train)
     pred = model.predict(X_test)
     pred_df = pd.DataFrame({"Actual":y_test.values,"AI Prediction":pred})
-    fig3 = px.line(pred_df, title="AI Prediction vs Actual")
-    st.plotly_chart(fig3,use_container_width=True)
+    fig2 = px.line(pred_df, title="AI Prediction vs Actual")
+    st.plotly_chart(fig2,use_container_width=True)
     st.success("Model AI berhasil dilatih!")
+
+st.divider()
 
 # =====================
 # SMART RECOMMENDATION
@@ -150,4 +140,4 @@ elif highest=="Lighting":
 st.subheader("📥 Download Dataset")
 csv = df.to_csv(index=False).encode("utf-8")
 st.download_button("Download CSV", csv,"energy_data.csv","text/csv")
-st.caption("Smart Energy Monitor AI • Versi Simpel Tapi Keren")
+st.caption("Smart Energy Monitor AI • Versi Simpel Tanpa Heatmap")
